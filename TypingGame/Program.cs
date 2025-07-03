@@ -1,173 +1,212 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Text;
+using System.Linq;
 
 namespace TypingGame
 {
     class Program
     {
-        private static readonly string[] Subjects = { "The programmer", "A developer", "The algorithm", "This code", "The AI" };
-        private static readonly string[] Verbs = { "writes", "debugs", "optimizes", "refactors", "deploys" };
-        private static readonly string[] Objects = { "clean code", "a neural network", "the database", "an API", "a mobile app" };
-        private static readonly string[] Adjectives = { "efficient", "buggy", "scalable", "broken", "secure" };
-        private static readonly string[] Connectors = { "while", "because", "although", "since", "after" };
-        private static readonly string[] SecondParts = { "testing it", "reading docs", "drinking coffee", "fixing bugs", "updating dependencies" };
+        //Difficulty levels
+        enum Difficulty { Easy, Medium, Hard }
+
+        //Sentences for every level of difficulty
+        static readonly string[] EasySentences =
+        {
+            "The cat sits on the mat.",
+            "I like to eat apples.",
+            "It is a sunny day."
+        };
+
+        static readonly string[] MediumSentences =
+        {
+            "Programming requires logical thinking.",
+            "C# is a strongly typed language.",
+            "Debugging can be challenging but rewarding."
+        };
+
+        static readonly string[] HardSentences =
+        {
+            "Asynchronous programming improves application responsiveness.",
+            "The quick brown fox jumps over the lazy dog while quantum computing evolves.",
+            "Implementing dependency injection promotes loose coupling between components."
+        };
+
         static void Main()
         {
-            // Set the test sentence for typing challenge
-            string testSentence = GenerateRandomSentence();
+            Console.WriteLine("Welcome to Typing Master!\n");
 
-            // Display game instructions
-            Console.WriteLine("Typing Game");
-            Console.WriteLine("Type the following sentence as fast as you can");
-            Console.WriteLine($"\n{testSentence}\n");  // Show the target sentence
+            while (true)
+            {
+                var difficulty = ChooseDifficulty();
+                var sentence = GetRandomSentence(difficulty);
 
-            // Wait for user to start the challenge
+                PlayGame(sentence, difficulty);
+
+                if (!AskToPlayAgain()) break;
+                Console.Clear();
+            }
+
+            Console.WriteLine("\nThanks for playing!");
+            Environment.Exit(0);
+        }
+
+        static Difficulty ChooseDifficulty()
+        {
+            Console.WriteLine("Choose difficulty:");
+            Console.WriteLine("1 - Easy (short sentences)");
+            Console.WriteLine("2 - Medium (technical terms)");
+            Console.WriteLine("3 - Hard (complex sentences)");
+
+            while (true)
+            {
+                var input = Console.ReadKey(true).KeyChar;
+                switch (input)
+                {
+                    case '1': return Difficulty.Easy;
+                    case '2': return Difficulty.Medium;
+                    case '3': return Difficulty.Hard;
+                }
+            }
+        }
+
+        static string GetRandomSentence(Difficulty difficulty)
+        {
+            var rand = new Random();
+            return difficulty switch
+            {
+                Difficulty.Easy => EasySentences[rand.Next(EasySentences.Length)],
+                Difficulty.Medium => MediumSentences[rand.Next(MediumSentences.Length)],
+                Difficulty.Hard => HardSentences[rand.Next(HardSentences.Length)],
+                _ => EasySentences[0]
+            };
+        }
+
+        static void PlayGame(string sentence, Difficulty difficulty)
+        {
+            // Setup
+            Console.Clear();
+            DisplayDifficultyHeader(difficulty);
+            Console.WriteLine($"Type this:\n\n{sentence}\n");
             Console.WriteLine("Press any key to start...");
             Console.ReadKey();
-            Console.Clear();  // Clear console for challenge
+            Console.Clear();
 
-            // Redisplay the sentence and prompt for input
-            Console.WriteLine($"Original: {testSentence}\n");
-            Console.Write("Your turn: ");  // Using Write() for better cursor placement
+            // Typing phase
+            Console.WriteLine($"Original: {sentence}\n");
+            Console.Write("Your turn: ");
 
-            // Start timer and capture user input
-            Stopwatch sw = Stopwatch.StartNew();
-            string userInput = Console.ReadLine()?.Trim() ?? "";  // Trim whitespace
-            sw.Stop();
+            var timer = Stopwatch.StartNew();
+            string input = Console.ReadLine()?.Trim() ?? "";
+            timer.Stop();
 
-            // Validate empty input
-            if (string.IsNullOrEmpty(userInput))
+            // Results
+            if (string.IsNullOrEmpty(input))
             {
                 Console.WriteLine("You didn't type anything!");
                 return;
             }
 
-            // Calculate results
-            int errorsCount = CountErrors(testSentence, userInput);
-            double wpm = CalculateWPM(testSentence, sw.Elapsed.TotalMinutes);
-
-            // Display results
-            Console.WriteLine("\n--- Results ---");
-            Console.WriteLine($"Time: {sw.Elapsed.TotalSeconds:F2} sec");
-            Console.WriteLine($"Errors: {errorsCount}");
-            Console.WriteLine($"Speed: {wpm:F1} WPM");
-
-            Console.WriteLine("\nYour errors (red):");
-            ShowColoredErrors(testSentence, userInput);
+            DisplayResults(sentence, input, timer.Elapsed, difficulty);
         }
 
-        /// <summary>
-        /// Compares original vs typed text character-by-character
-        /// </summary>
+        static void DisplayDifficultyHeader(Difficulty difficulty)
+        {
+            ConsoleColor color = difficulty switch
+            {
+                Difficulty.Easy => ConsoleColor.Green,
+                Difficulty.Medium => ConsoleColor.Yellow,
+                Difficulty.Hard => ConsoleColor.Red,
+                _ => ConsoleColor.White
+            };
+
+            Console.ForegroundColor = color;
+            Console.WriteLine($"=== {difficulty} MODE ===");
+            Console.ResetColor();
+        }
+
+        static void DisplayResults(string original, string typed, TimeSpan time, Difficulty difficulty)
+        {
+            int errors = CountErrors(original, typed);
+            double wpm = CalculateWPM(original, time.TotalMinutes);
+            int score = CalculateScore(difficulty, errors, time.TotalSeconds);
+
+            Console.WriteLine("\n--- Results ---");
+            Console.WriteLine($"Time: {time.TotalSeconds:F2} seconds");
+            Console.WriteLine($"Errors: {errors}");
+            Console.WriteLine($"Speed: {wpm:F1} WPM");
+            Console.WriteLine($"Score: {score}");
+
+            Console.WriteLine("\nError analysis:");
+            ShowColoredErrors(original, typed);
+        }
+
         static int CountErrors(string original, string typed)
         {
             int errors = 0;
             int minLength = Math.Min(original.Length, typed.Length);
 
-            // Count character mismatches
             for (int i = 0; i < minLength; i++)
-            {
                 if (original[i] != typed[i]) errors++;
-            }
 
-            // Add length difference as additional errors
             return errors + Math.Abs(original.Length - typed.Length);
         }
 
-        /// <summary>
-        /// Calculates words-per-minute (WPM) typing speed
-        /// </summary>
         static double CalculateWPM(string text, double minutes)
         {
             if (minutes <= 0) return 0;
-            int wordCount = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length;
+            int wordCount = text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
             return wordCount / minutes;
         }
-        static string GenerateRandomSentence()
+
+        static int CalculateScore(Difficulty difficulty, int errors, double seconds)
         {
-            Random rand = new Random();
-            StringBuilder sentence = new StringBuilder();
-
-            // Simple sentence structure: Subject + Verb + Adjective + Object
-            sentence.Append(Subjects[rand.Next(Subjects.Length)] + " ");
-            sentence.Append(Verbs[rand.Next(Verbs.Length)] + " ");
-
-            // 50% chance to add an adjective
-            if (rand.Next(2) == 0)
+            int baseScore = difficulty switch
             {
-                sentence.Append(Adjectives[rand.Next(Adjectives.Length)] + " ");
-            }
+                Difficulty.Easy => 100,
+                Difficulty.Medium => 200,
+                Difficulty.Hard => 350,
+                _ => 0
+            };
 
-            sentence.Append(Objects[rand.Next(Objects.Length)]);
+            double errorPenalty = errors * 5;
+            double speedBonus = (50 / seconds) * 10;
 
-            // 40% chance to add a connector and second part
-            if (rand.Next(10) < 4)
-            {
-                sentence.Append(" " + Connectors[rand.Next(Connectors.Length)] + " ");
-                sentence.Append(SecondParts[rand.Next(SecondParts.Length)]);
-            }
-
-            return sentence.ToString() + ".";
+            return (int)(baseScore - errorPenalty + speedBonus);
         }
+
         static void ShowColoredErrors(string original, string typed)
         {
             Console.WriteLine("Original: " + original);
             Console.Write("Your text: ");
 
-            int origIndex = 0, typedIndex = 0;
-            bool inError = false;
-
-            while (origIndex < original.Length || typedIndex < typed.Length)
+            for (int i = 0; i < typed.Length; i++)
             {
-                //If the symbols are same(and there is no error until now)
-                if (origIndex < original.Length &&
-                    typedIndex < typed.Length &&
-                    original[origIndex] == typed[typedIndex] &&
-                    !inError)
+                if (i >= original.Length || original[i] != typed[i])
                 {
-                    Console.Write(typed[typedIndex]);
-                    origIndex++;
-                    typedIndex++;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write(typed[i]);
+                    Console.ResetColor();
                 }
                 else
                 {
-                    //Mark the error in red
-                    if (!inError)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        inError = true;
-                    }
-
-                    
-                    // Prioritise printing the input
-                    if (typedIndex < typed.Length)
-                    {
-                        Console.Write(typed[typedIndex]);
-                        typedIndex++;
-                    }
-                    else//If there are only original symbols
-
-                    {
-                        Console.Write("_");
-                        origIndex++;
-                    }
-                }
-
-                
-                //If the next symbol is right, the error chain is false
-                if (origIndex < original.Length &&
-                    typedIndex < typed.Length &&
-                    original[origIndex] == typed[typedIndex] &&
-                    inError)
-                {
-                    Console.ResetColor();
-                    inError = false;
+                    Console.Write(typed[i]);
                 }
             }
 
-            Console.ResetColor();
+            if (typed.Length < original.Length)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Write(new string('_', original.Length - typed.Length));
+                Console.ResetColor();
+            }
+
             Console.WriteLine();
+        }
+
+        static bool AskToPlayAgain()
+        {
+            Console.WriteLine("\nPlay again? (Y/N)");
+            return Console.ReadKey(true).Key == ConsoleKey.Y;
         }
     }
 }
