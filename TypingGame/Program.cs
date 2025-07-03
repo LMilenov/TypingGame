@@ -14,21 +14,45 @@ namespace TypingGame
         {
             "The cat sits on the mat.",
             "I like to eat apples.",
-            "It is a sunny day."
+            "It is a sunny day.",
+            "The sun shines brightly.",
+                "Dogs are loyal animals.",
+                "I drink coffee every morning.",
+                "Summer is my favorite season.",
+                "We learn programming every day.",
+                "Music makes me happy.",
+                "The book is on the table.",
+                "Children love to play outside."
         };
 
         static readonly string[] MediumSentences =
         {
             "Programming requires logical thinking.",
             "C# is a strongly typed language.",
-            "Debugging can be challenging but rewarding."
+            "Debugging can be challenging but rewarding.",
+             "C# supports object-oriented programming.",
+                "Git helps manage code versions.",
+                "Algorithms are problem-solving tools.",
+                "Debugging requires patience and skill.",
+                "Visual Studio is powerful IDE.",
+                "Computers understand binary code.",
+                "The Internet connects people worldwide.",
+                "Keyboard shortcuts save time."
         };
 
         static readonly string[] HardSentences =
         {
             "Asynchronous programming improves application responsiveness.",
             "The quick brown fox jumps over the lazy dog while quantum computing evolves.",
-            "Implementing dependency injection promotes loose coupling between components."
+            "Implementing dependency injection promotes loose coupling between components.",
+            "Polymorphism allows objects to take many forms.",
+                "Quantum computing leverages quantum-mechanical phenomena.",
+                "Machine learning models improve with more data.",
+                "Blockchain technology enables decentralized systems.",
+                "Asynchronous programming avoids thread-blocking operations.",
+                "Design patterns provide reusable solutions to common problems.",
+                "Cybersecurity threats evolve constantly in digital ecosystems.",
+                "Containerization improves software deployment efficiency."
         };
 
         static void Main()
